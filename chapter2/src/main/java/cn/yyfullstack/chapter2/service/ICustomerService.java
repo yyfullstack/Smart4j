@@ -15,14 +15,14 @@ public interface ICustomerService {
     List<Customer> getCustomerList();
 
     //获取客户
-    Customer getCustomer(int id);
+    Customer getCustomer(long id);
 
     //创建客户
     boolean createCustomer(Map<String, Object> fieldMap);
 
     //更新客户
-    boolean updateCustomer(int id, Map<String, Object> fieldMap);
+    boolean updateCustomer(long id, Map<String, Object> fieldMap);
 
     //删除客户
-    boolean deleteCustomer(int id);
+    boolean deleteCustomer(long id);
 }

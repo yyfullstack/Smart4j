@@ -74,7 +74,9 @@ public class DatabaseHelper {
         List<Map<String, Object>> result;
         try {
             Connection conn = getConnection();
+            LOGGER.info("executeQuery SQL: ", sql);
             result = QUERY_RUNNER.query(conn, sql, new MapListHandler(), params);
+
         } catch (Exception e) {
             LOGGER.error("execute query failure", e);
             throw new RuntimeException(e);
@@ -93,6 +95,7 @@ public class DatabaseHelper {
         int rows = 0;
         try {
             Connection conn = getConnection();
+            LOGGER.info("executeUpdate SQL: ", sql);
             rows = QUERY_RUNNER.update(conn, sql, params);
         } catch (Exception e) {
             LOGGER.error("execute update failure", e);
@@ -101,18 +104,17 @@ public class DatabaseHelper {
         return rows;
     }
 
-    public static int[] executeBatch(String sql, Object[][] params) {
-        int[] rows = new int[0];
-        try {
-            Connection conn = getConnection();
-            rows = QUERY_RUNNER.batch(conn, sql, params);
-        } catch (Exception e) {
-            LOGGER.error("execute batch failure", e);
-            throw new RuntimeException(e);
-        }
-        return rows;
-    }
-
+//    public static int[] executeBatch(String sql, Object[][] params) {
+//        int[] rows = new int[0];
+//        try {
+//            Connection conn = getConnection();
+//            rows = QUERY_RUNNER.batch(conn, sql, params);
+//        } catch (Exception e) {
+//            LOGGER.error("execute batch failure", e);
+//            throw new RuntimeException(e);
+//        }
+//        return rows;
+//    }
 
     public static long executeCount(String sql, Object... params) {
         Number num = 0;
@@ -137,6 +139,22 @@ public class DatabaseHelper {
         }
         return entityList;
     }
+
+//    public static <T> PageBean queryByPage(Class<T> entityClass, String sql, PageBean pageBean, Object... params) {
+//        if (pageBean == null) {
+//            pageBean = new PageBean();
+//        }
+//        try {
+//            Connection conn = getConnection();
+//            List<T> entityList = QUERY_RUNNER.query(conn, sql, new BeanListHandler<T>(entityClass), params);
+//            pageBean.setT(entityList);
+//        } catch (Exception e) {
+//            LOGGER.error("execute query list failure", e);
+//            throw new RuntimeException(e);
+//        }
+//        return pageBean;
+//    }
+
 
     public static <T> T queryEntity(Class<T> entityClass, String sql, Object... params) {
         T entity;
@@ -175,7 +193,7 @@ public class DatabaseHelper {
             return false;
         }
         String sql = "UPDATE " + getTableName(entityClass) + " SET ";
-        StringBuilder columns = new StringBuilder("(");
+        StringBuilder columns = new StringBuilder();
         for (String fieldName : fieldMap.keySet()) {
             columns.append(fieldName).append(" = ?, ");
         }
@@ -209,7 +227,60 @@ public class DatabaseHelper {
         }
     }
 
-    private static <T> String getTableName(Class<T> entityClass) {
+    //开启事务
+    public static void startTransaction() {
+        Connection conn = getConnection();
+        try {
+            //开启事务
+            conn.setAutoCommit(false);
+        } catch (Exception e) {
+            LOGGER.error("start transaction failure", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    //提交事务
+    public static void commitTransaction() {
+        Connection conn = getConnection();
+        try {
+            //提交事务
+            conn.commit();
+        } catch (Exception e) {
+            LOGGER.error("commit transaction failure", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    //回滚事务
+    public static void rollbackTransaction() {
+        Connection conn = getConnection();
+        try {
+            //回滚事务
+            conn.rollback();
+        } catch (Exception e) {
+            LOGGER.error("rollback transaction failure", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    //关闭连接
+    public static void colseConnection() {
+        Connection conn = getConnection();
+        if (conn != null) {
+            try {
+                //关闭连接
+                conn.close();
+            } catch (Exception e) {
+                LOGGER.error("colose connection failure", e);
+                throw new RuntimeException(e);
+            } finally {
+                //从当前线程移除连接 切记
+                CONNECTION_HOLDER.remove();
+            }
+        }
+    }
+
+    public static <T> String getTableName(Class<T> entityClass) {
         return entityClass.getSimpleName();
     }
 }
